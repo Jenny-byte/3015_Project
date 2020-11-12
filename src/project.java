@@ -12,12 +12,10 @@ import java.util.Scanner;
 public class project {
 	ServerSocket srvSocket;
 	ArrayList<DatagramPacket> clientList = new ArrayList<DatagramPacket>();
-	ArrayList<Socket> list = new ArrayList<Socket>();
+	// ArrayList<Socket> list = new ArrayList<Socket>();
 	boolean isRunning = true;
 
 	public project() throws IOException {
-
-		// while(isRunning) {
 
 		String computerName = inputComputerName();
 
@@ -32,7 +30,6 @@ public class project {
 		t1.start();
 
 		Thread t2 = new Thread(() -> {
-
 			tpcClient(9999);
 
 		});
@@ -42,13 +39,13 @@ public class project {
 		Thread t3 = new Thread(() -> {
 			try {
 				TPCserver tpcServer = new TPCserver(9999);
+				
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		});
 		t3.start();
-
 	}
 
 	public String inputComputerName() {
@@ -137,7 +134,8 @@ public class project {
 			} else if (option == 3) {
 				System.out.println("bye!");
 				welcome = false;
-				isRunning = false;
+				System.exit(0);
+				
 			} else {
 				System.out.println("Invalid input!");
 			}
@@ -163,7 +161,7 @@ public class project {
 					chosenPacket = clientList.get((serverNum - 1));
 				}
 				String computerName = new String(chosenPacket.getData(), 0, chosenPacket.getLength());
-				System.out.println("Chosen server: " + computerName  + " with IP address " + chosenPacket.getAddress());
+				System.out.println("Chosen server: " + computerName + " with IP address " + chosenPacket.getAddress());
 				String s = null;
 				int p = 0;
 				try {
@@ -173,59 +171,20 @@ public class project {
 					System.err.println("Usage: java chosenServerConnect ipaddress portNum");
 					System.exit(-1);
 				}
-				connectTpcServer(s, p);
 
-			}
-
-		}
-
-	}
-
-	public void connectTpcServer(String s, int p) {
-
-		try {
-			tpcClient(s, p);
-		} catch (IOException e) {
-			System.err.printf("Unable to connect server %s:%d\n", s, p);
-			System.exit(-1);
-		}
-
-	}
-
-	public void tpcClient(String server, int tcpPort) throws IOException {
-		Socket socket = new Socket(server, tcpPort);
-		DataInputStream in = new DataInputStream(socket.getInputStream());
-		DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-
-		Thread t = new Thread(() -> {
-			byte[] buffer = new byte[1024];
-			try {
-				while (true) {
-					int len = in.readInt();
-					in.read(buffer, 0, len);
-					System.out.println(new String(buffer, 0, len));
+				// till here is ok
+				try {
+					TPCclient tpcClient = new TPCclient(s, p);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
-			} catch (IOException ex) {
-				System.err.println("Connection dropped!");
-				System.exit(-1);
 			}
-		});
-		t.start();
 
-		Scanner scanner = new Scanner(System.in);
-
-		System.out.println("Please input your name:");
-		String name = scanner.nextLine().trim();
-
-		System.out.println("Please input messages:");
-
-		while (true) {
-			// String str = scanner.nextLine();
-			String str = name + ": " + scanner.nextLine();
-			out.writeInt(str.length());
-			out.write(str.getBytes(), 0, str.length());
 		}
+
 	}
+
 
 	// public void login() {
 	// System.out.println("Please enter your username:");
