@@ -13,113 +13,227 @@ public class project {
 	ServerSocket srvSocket;
 	ArrayList<DatagramPacket> clientList = new ArrayList<DatagramPacket>();
 	ArrayList<Socket> list = new ArrayList<Socket>();
+	boolean isRunning = true;
 
 	public project() throws IOException {
-		
-		Thread t1 = new Thread(() -> {
-			try {
-				udpServer(9998);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		});
-		t1.start();
-		
-//		int portTCP = 9999;
-//		srvSocket = new ServerSocket(portTCP );
-//
-//		while (true) {
-//			System.out.printf("Listening at port %d...\n", portTCP );
-//			Socket cSocket = srvSocket.accept();
-//
-//			synchronized (list) {
-//				list.add(cSocket);
-//				System.out.printf("Total %d clients are connected.\n", list.size());
-//			}
-//
-//			Thread t2 = new Thread(() -> {
-//				try {
-//					serveTCP(cSocket);
-//				} catch (IOException e) {
-//					System.err.println("connection dropped.");
-//				}
-//				synchronized (list) {
-//					list.remove(cSocket);
-//				}
-//			});
-//			t2.start();
-//		}
+
+		if (isRunning) {
+
+			String computerName = inputComputerName();
+
+			Thread t1 = new Thread(() -> {
+				try {
+					udpServer(9998, computerName);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			});
+			t1.start();
+
+			Thread t2 = new Thread(() -> {
+				
+				tpcClient(9999);
+			
+			});
+			t2.start();
+
+			// Thread t3 = new Thread(() -> {
+			// try {
+			// TPCserver tpcServer = new TPCserver(9999);
+			// } catch (IOException e) {
+			// // TODO Auto-generated catch block
+			// e.printStackTrace();
+			// }
+			// });
+			// t3.start();
+		}
+
 	}
-	
-	public void udpServer(int port) throws IOException {
+
+	public String inputComputerName() {
 		Scanner scanner = new Scanner(System.in);
 		System.out.println("Please input your computer name:");
 		String computerName = scanner.nextLine().trim();
-		
+		return computerName;
+
+	}
+
+	public void udpServer(int port, String computerName) throws IOException {
+
 		DatagramSocket socket = new DatagramSocket(port);
-		DatagramPacket packet = new DatagramPacket(computerName.getBytes(), computerName.length(), InetAddress.getByName("255.255.255.255"), port);
+		DatagramPacket packet = new DatagramPacket(computerName.getBytes(), computerName.length(),
+				InetAddress.getByName("255.255.255.255"), port);
 		socket.send(packet);
-		
+
 		DatagramPacket receivedPacket = new DatagramPacket(new byte[1024], 1024);
-		System.out.println("Searching clients...");
-		while(true) {
-			
+		System.out.println("Searching servers...");
+		while (true) {
+
 			socket.receive(receivedPacket);
 			String receivedData = new String(receivedPacket.getData(), 0, receivedPacket.getLength());
 			String srcAddr = receivedPacket.getAddress().toString();
-			
+
 			if (!receivedData.equals(computerName) && !clientList.contains(receivedPacket)) {
 				synchronized (clientList) {
 					clientList.add(receivedPacket);
-					System.out.printf("Total %d clients are in the list.\n", clientList.size());
+				}
+				// printList(clientList);
+
+				// Thread t = new Thread(() -> {
+				// try {
+				// serve(cSocket);
+				// } catch (IOException e) {
+				// System.err.println("connection dropped.");
+				// }
+				// synchronized (list) {
+				// clientList.remove(receivedPacket);
+				// }
+				// });
+				// t.start();
+				packet = new DatagramPacket(computerName.getBytes(), computerName.length(), receivedPacket.getAddress(),
+						receivedPacket.getPort());
+				socket.send(packet);
+
+			}
+
+		}
+	}
+
+	public void printList(ArrayList<DatagramPacket> cList) {
+		int i = 1;
+		for (DatagramPacket client : cList) {
+			String computerName = new String(client.getData(), 0, client.getLength());
+			System.out.println(i + ". " + computerName + " (" + client.getAddress().toString() + ")");
+			i++;
+		}
+	}
+
+	private void tpcClient(int tcpPort) {
+
+		boolean welcome = true;
+		while (welcome) {
+			System.out.println("----------------------------------------");
+			System.out.println("Please input the option number:");
+			System.out.println("1. List out all the avaliable servers.\n" + "2. Find a server to connect and login.\n"
+					+ "3. Exit\n");
+			Scanner scanner2 = new Scanner(System.in);
+			int option = scanner2.nextInt();
+
+			if (option == 1) {
+				synchronized (clientList) {
+					System.out.printf("Total %d server(s) in the list:\n", clientList.size());
 					printList(clientList);
 				}
-				packet = new DatagramPacket(computerName.getBytes(), computerName.length(), receivedPacket.getAddress(), receivedPacket.getPort());
-				socket.send(packet);
+
+			} else if (option == 2) {
+
+				// chooseServerConnect(tcpPort);
+
+			} else if (option == 3) {
+				System.out.println("bye!");
+				welcome = false;
+				isRunning = false;
+			} else {
+				System.out.println("Invalid input!");
 			}
 		}
-	}
-	
-	public void printList(ArrayList<DatagramPacket> list){
-		int i = 1;
-	    for(DatagramPacket client : list){
-	    	String computerName = new String(client.getData(), 0, client.getLength());
-	        System.out.println(i+ ". " + computerName +" ("+ client.getAddress().toString() +")");
-	        i++;
-	    }
-	}
-	
-	private void serveTCP(Socket clientSocket) throws IOException {
-		byte[] buffer = new byte[1024];
-		System.out.printf("Established a connection to host %s:%d\n\n", clientSocket.getInetAddress(),
-				clientSocket.getPort());
 
-		DataInputStream in = new DataInputStream(clientSocket.getInputStream());
-		DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
-		while (true) {
-			//functions
-		}
 	}
+//
+//	public void chooseServerConnect(int tcpPort) {
+//		Scanner scanner = new Scanner(System.in);
+//		boolean inputServer = true;
+//
+//		while (inputServer == true) {
+//
+//			System.out.printf("Total %d server(s) in the list.\n", clientList.size());
+//			printList(clientList);
+//
+//			System.out.println();
+//			System.out.println("Please enter the number of the server that you want to connect.");
+//			int serverNum = scanner.nextInt();
+//
+//			if (serverNum > clientList.size()) {
+//				System.out.println("No such server!");
+//			} else {
+//				DatagramPacket chosenPacket;
+//				synchronized (clientList) {
+//					chosenPacket = clientList.get(serverNum - 1);
+//				}
+//				String computerName = new String(chosenPacket.getData(), 0, chosenPacket.getLength());
+//				String s = null;
+//				int p = 0;
+//				try {
+//					s = chosenPacket.getAddress().toString();
+//					p = tcpPort;
+//				} catch (IndexOutOfBoundsException | NumberFormatException e) {
+//					System.err.println("Usage: java chosenServerConnect ipaddress portNum");
+//					System.exit(-1);
+//				}
+//				connectTpcServer(s, p);
+//
+//			}
+//
+//		}
+//
+//	}
+//
+//	public void connectTpcServer(String s, int p) {
+//
+//		try {
+//			tpcClient(s, p);
+//		} catch (IOException e) {
+//			System.err.printf("Unable to connect server %s:%d\n", s, p);
+//			System.exit(-1);
+//		}
+//
+//	}
+//
+//	public void tpcClient(String server, int tcpPort) throws IOException {
+//		Socket socket = new Socket(server, tcpPort);
+//		DataInputStream in = new DataInputStream(socket.getInputStream());
+//		DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+//
+//		Thread t = new Thread(() -> {
+//			byte[] buffer = new byte[1024];
+//			try {
+//				while (true) {
+//					int len = in.readInt();
+//					in.read(buffer, 0, len);
+//					System.out.println(new String(buffer, 0, len));
+//				}
+//			} catch (IOException ex) {
+//				System.err.println("Connection dropped!");
+//				System.exit(-1);
+//			}
+//		});
+//		t.start();
+//
+//		Scanner scanner = new Scanner(System.in);
+//
+//		System.out.println("Please input your name:");
+//		String name = scanner.nextLine().trim();
+//
+//		System.out.println("Please input messages:");
+//
+//		while (true) {
+//			// String str = scanner.nextLine();
+//			String str = name + ": " + scanner.nextLine();
+//			out.writeInt(str.length());
+//			out.write(str.getBytes(), 0, str.length());
+//		}
+//	}
 
-	private void forward(byte[] data, int len, Socket clientSocket) {
-		synchronized (list) {
-			for (int i = 0; i < list.size(); i++) {
-				try {
-					Socket socket = list.get(i);
-					if( socket != clientSocket) {
-					DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-					out.writeInt(len);
-					out.write(data, 0, len);
-					}
-				} catch (IOException e) {
-					// the connection is dropped but the socket is not yet removed.
-				}
-			}
-		}
-	}
-	
-	public static void main(String[] args)throws IOException {
+	// public void login() {
+	// System.out.println("Please enter your username:");
+	// String username = scanner.nextLine().trim();
+	//
+	// System.out.println("Please enter your password:");
+	// String password = scanner.nextLine().trim();
+	// }
+
+	public static void main(String[] args) throws IOException {
 		project s = new project();
 	}
-	
+
 }
