@@ -39,9 +39,9 @@ public class TPCserver {
 			byte[] buffer = new byte[1024];
 			System.out.printf("Established a connection to host %s:%d\n\n", clientSocket.getInetAddress(),
 					clientSocket.getPort());
-
-			DataInputStream in = new DataInputStream(clientSocket.getInputStream());
+			
 			while (true) {
+				DataInputStream in = new DataInputStream(clientSocket.getInputStream());
 				int len = in.readInt();
 				in.read(buffer, 0, len);
 				forward(buffer, len, clientSocket);
@@ -49,6 +49,19 @@ public class TPCserver {
 		}
 
 		private void forward(byte[] data, int len, Socket clientSocket) {
-			System.out.println("Hi");
+			synchronized (list) {
+				for (int i = 0; i < list.size(); i++) {
+					try {
+						Socket socket = list.get(i);
+						if( socket != clientSocket) {
+						DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+						out.writeInt(len);
+						out.write(data, 0, len);
+						}
+					} catch (IOException e) {
+						// the connection is dropped but the socket is not yet removed.
+					}
+				}
+			}
 		}
 }

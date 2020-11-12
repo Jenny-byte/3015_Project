@@ -1,11 +1,8 @@
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -41,7 +38,7 @@ public class project {
 				TPCserver tpcServer = new TPCserver(9999);
 				
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
+				
 				e.printStackTrace();
 			}
 		});
@@ -161,18 +158,21 @@ public class project {
 					chosenPacket = clientList.get((serverNum - 1));
 				}
 				String computerName = new String(chosenPacket.getData(), 0, chosenPacket.getLength());
-				System.out.println("Chosen server: " + computerName + " with IP address " + chosenPacket.getAddress());
+				String ipAddress = chosenPacket.getAddress().toString();
+				ipAddress = ipAddress.substring(1, ipAddress.length());
+				System.out.println("Chosen server: " + computerName + " with IP address " + ipAddress);
+				
+				
 				String s = null;
 				int p = 0;
 				try {
-					s = chosenPacket.getAddress().toString();
+					s = ipAddress;
 					p = tcpPort;
 				} catch (IndexOutOfBoundsException | NumberFormatException e) {
 					System.err.println("Usage: java chosenServerConnect ipaddress portNum");
 					System.exit(-1);
 				}
 
-				// till here is ok
 				try {
 					TPCclient tpcClient = new TPCclient(s, p);
 				} catch (IOException e) {
