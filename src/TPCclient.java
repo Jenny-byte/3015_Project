@@ -38,6 +38,7 @@ public class TPCclient {
 					}
 
 					respondReceived(socket, receivedData);
+					
 				}
 			} catch (IOException ex) {
 				System.err.println("Connection dropped!");
@@ -138,8 +139,8 @@ public class TPCclient {
 	}
 	
 	private void ls(String[] dataArray) {
-		for(String s : dataArray) {
-		System.out.print(s);
+		for(int i =1; i< dataArray.length; i++) {
+		System.out.print(dataArray[i]);
 		}
 	}
 	
