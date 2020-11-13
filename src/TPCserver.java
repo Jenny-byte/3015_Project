@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Scanner;
 
 public class TPCserver {
@@ -44,7 +45,6 @@ public class TPCserver {
 				clientSocket.getPort());
 
 		try {
-			
 			DataInputStream in = new DataInputStream(clientSocket.getInputStream());
 			while (true) {
 
@@ -54,9 +54,11 @@ public class TPCserver {
 					int len = in.read(buffer, 0, buffer.length);
 					receivedData += new String(buffer, 0, len);
 					size -= len;
+
 				}
 
 				respond(clientSocket, receivedData);
+
 			}
 		} catch (Exception e) {
 			System.err.println("ERROR: Connection dropped");
@@ -77,7 +79,8 @@ public class TPCserver {
 			break;
 
 		case "ls":
-			// ls(socket, directory);
+			String path = dataArray[1];
+			ls(commend, clientSocket, path);
 			break;
 
 		case "md":
@@ -103,11 +106,11 @@ public class TPCserver {
 		case "rename":
 
 			break;
-			
+
 		case "detailF":
 
 			break;
-			
+
 		case "exit":
 			try {
 				clientSocket.close();
@@ -117,7 +120,7 @@ public class TPCserver {
 			break;
 
 		default:
-			sendReply(clientSocket, "UnknownCommand");
+			sendRequest(clientSocket, "UnknownCommand");
 			break;
 		}
 	}
@@ -128,21 +131,50 @@ public class TPCserver {
 		if (password.equals("12345")) { // valid login
 			reply = "valid";
 		}
-		
+
 		reply = "login " + reply;
 		System.out.println(reply);
-		sendReply(clientSocket, reply);
+		sendRequest(clientSocket, reply);
 	}
 
-	private void sendReply(Socket clientSocket, String reply) {
-		try {
+	private void ls(String commend, Socket clientSocket, String path) {
+		String reply = commend;
+		File obj = new File(path); 
+		if(!obj.exists()) {
+			sendRequest(clientSocket, reply + " File Not Found!");
+			return;
+		}
+		if(obj.isDirectory()) {
+			File[] files = obj.listFiles();
+			if(files.length == 0) {
+				sendRequest(clientSocket, reply + " Empty!");
+				return;
+			}
 			
+			for(File f: files) {
+				if(f.isDirectory()){
+					reply += new Date(f.lastModified()) + " " + " <DIR> " + f.getName() + "\n";
+				}else {
+					reply += new Date(f.lastModified()) + " " + f.length() + "B " + f.getName() + "\n";
+
+				}
+			}
+			sendRequest(clientSocket, reply);
+			
+		}else {
+			reply += new Date(obj.lastModified()) + " " + obj.length() + "B " + obj.getName() + "\n";
+			sendRequest(clientSocket, reply);
+		}
+	}
+
+	private void sendRequest(Socket clientSocket, String reply) {
+		try {
 			DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
 			byte[] data = reply.getBytes();
 			out.writeLong(reply.length());
 			out.write(reply.getBytes(), 0, reply.length());
 		} catch (Exception e) {
-			System.out.println("Fail to send your reply.");
+			System.err.println("ERROR: Fail to send your reply.");
 		}
 	}
 }

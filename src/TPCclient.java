@@ -51,11 +51,16 @@ public class TPCclient {
 		
 		while(!loginValid) {
 			commend = login();
-			System.out.println(loginValid);
 			sendRequest(socket, commend);
-			
-			System.out.println(loginValid);
+			try {
+				Thread.sleep(500);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			//System.out.println(loginValid);
 		}
+		
 		
 		System.out.println("Please enter the commend:");
 		commend = scanner.nextLine();
@@ -80,11 +85,6 @@ public class TPCclient {
 		return request;
 	}
 
-	public String requestCommend(String commend) {
-		String request = "";
-
-		return request;
-	}
 
 	public void respondReceived(Socket socket, String receivedData) {
 		String data = receivedData.trim();
@@ -94,15 +94,15 @@ public class TPCclient {
 		switch (commend) {
 		case "login":
 			if(dataArray[1].equals("valid")) {
-				System.out.println(dataArray[1]);
 				loginValid = true;
+				System.out.println("Successful Login!");
 			}else {
 				System.out.println("Invalid login!");
 			}
 			break;
 
 		case "ls":
-			
+			ls(dataArray);
 			break;
 
 		case "md":
@@ -136,7 +136,13 @@ public class TPCclient {
 			
 		
 	}
-
+	
+	private void ls(String[] dataArray) {
+		for(String s : dataArray) {
+		System.out.print(s);
+		}
+	}
+	
 	private void sendRequest(Socket socket, String request) {
 		try {
 			DataOutputStream out = new DataOutputStream(socket.getOutputStream());
