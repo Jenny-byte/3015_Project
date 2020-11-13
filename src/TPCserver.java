@@ -52,9 +52,8 @@ public class TPCserver {
 				String receivedData = "";
 				while (size > 0) {
 					int len = in.read(buffer, 0, buffer.length);
-					receivedData = new String(buffer, 0, len);
+					receivedData += new String(buffer, 0, len);
 					size -= len;
-					System.out.print(".");
 				}
 
 				respond(clientSocket, receivedData);
