@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 public class TPCclient {
+	boolean loginValid = false;
 
 	public TPCclient(String server, int tcpPort) throws IOException {
 
@@ -27,15 +28,17 @@ public class TPCclient {
 			try {
 				DataInputStream in = new DataInputStream(socket.getInputStream());
 				while (true) {
-					
-					
-					int len = in.readInt();
-					in.read(buffer, 0, len);
-					System.out.println(new String(buffer, 0, len));
+
+					long size = in.readLong();
+					String receivedData = "";
+					while (size > 0) {
+						int len = in.read(buffer, 0, buffer.length);
+						receivedData += new String(buffer, 0, len);
+						size -= len;
+					}
+
+					respondReceived(socket, receivedData);
 				}
-				
-				
-				
 			} catch (IOException ex) {
 				System.err.println("Connection dropped!");
 				System.exit(-1);
@@ -44,40 +47,99 @@ public class TPCclient {
 		t.start();
 
 		Scanner scanner = new Scanner(System.in);
+		String commend = "";
+		
+		while(!loginValid) {
+			commend = login();
+		}
 		
 		System.out.println("Please enter the commend:");
-		int commendNum = scanner.nextInt();
-
+		commend = scanner.nextLine();
+		
+		
 		while (true) {
 			// String str = scanner.nextLine();
-			String str = replyCommend(commendNum);
-			sendReply(socket, str);
+			//String str = requestCommend(commend);
+			sendRequest(socket, commend);
 		}
 	}
 
-	public void login() {
+	public String login() {
 		System.out.println("Please enter your username:");
 		Scanner scanner = new Scanner(System.in);
 		String username = scanner.nextLine().trim();
 
 		System.out.println("Please enter your password:");
 		String password = scanner.nextLine().trim();
-	}
-	
-	public String replyCommend(int commendNum) {
-		String reply = "";
 		
-		return reply;
+		String request = "login "+ username + " " + password;
+		return request;
 	}
-	
-private void sendReply(Socket socket, String reply) {
+
+	public String requestCommend(String commend) {
+		String request = "";
+
+		return request;
+	}
+
+	public void respondReceived(Socket socket, String receivedData) {
+		String data = receivedData.trim();
+		String dataArray[] = data.split(" ");
+		String commend = dataArray[0];
+
+		switch (commend) {
+		case "login":
+			if(dataArray[1] == "valid") {
+				loginValid = true;
+			}else {
+				System.out.println("Invalid login!");
+			}
+			break;
+
+		case "ls":
+			
+			break;
+
+		case "md":
+			
+			break;
+
+		case "upload":
+
+			break;
+
+		case "download":
+
+			break;
+
+		case "delF":
+
+			break;
+
+		case "delD":
+
+			break;
+
+		case "rename":
+
+			break;
+			
+		case "detailF":
+
+			break;
+		}
+			
+		
+	}
+
+	private void sendRequest(Socket socket, String request) {
 		try {
 			DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-			byte[] data = reply.getBytes();
-			out.writeInt(reply.length());
-			out.write(reply.getBytes(), 0, reply.length());
+			byte[] data = request.getBytes();
+			out.writeInt(request.length());
+			out.write(request.getBytes(), 0, request.length());
 		} catch (Exception e) {
-			System.out.println("ERROR: Fail to send your reply.");
+			System.out.println("Fail to send your request.");
 		}
 	}
 

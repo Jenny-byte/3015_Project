@@ -116,18 +116,19 @@ public class TPCserver {
 			break;
 
 		default:
-			sendRequest(clientSocket, "Unknown command");
+			sendRequest(clientSocket, "UnknownCommand");
 			break;
 		}
 	}
 
 	private void verifyPassward(Socket clientSocket, String username, String password) {
-		String reply = "false";
+		String reply = "invalid";
 
 		if (password == "12345") { // valid login
-			reply = "true";
+			reply = "valid";
 		}
-
+		
+		reply = "login "+ reply;
 		sendRequest(clientSocket, reply);
 	}
 

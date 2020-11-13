@@ -59,10 +59,10 @@ public class project {
 		DatagramPacket packet = new DatagramPacket(computerName.getBytes(), computerName.length(),
 				InetAddress.getByName("255.255.255.255"), port);
 
-		
+		socket.send(packet); // keep on broadcasting
 		System.out.println("Searching servers...");
 		while (true) {
-			socket.send(packet); // keep on broadcasting
+			
 			DatagramPacket receivedPacket = new DatagramPacket(new byte[1024], 1024);
 			socket.receive(receivedPacket);
 			String receivedData = new String(receivedPacket.getData(), 0, receivedPacket.getLength());
