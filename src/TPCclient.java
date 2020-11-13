@@ -36,8 +36,14 @@ public class TPCclient {
 						receivedData += new String(buffer, 0, len);
 						size -= len;
 					}
-
+					
 					respondReceived(socket, receivedData);
+					String data = receivedData.trim();
+					String dataArray[] = data.split(" ");
+					String commend = dataArray[0];
+					System.out.println(receivedData.substring(commend.length()+1, receivedData.length()));
+					
+					System.out.println("Please enter the commend:");
 					
 				}
 			} catch (IOException ex) {
@@ -63,13 +69,8 @@ public class TPCclient {
 		}
 		
 		
-		System.out.println("Please enter the commend:");
-		commend = scanner.nextLine();
-		
-		
 		while (true) {
-			// String str = scanner.nextLine();
-			//String str = requestCommend(commend);
+			commend = scanner.nextLine();
 			sendRequest(socket, commend);
 		}
 	}
@@ -101,48 +102,11 @@ public class TPCclient {
 				System.out.println("Invalid login!");
 			}
 			break;
-
-		case "ls":
-			ls(dataArray);
-			break;
-
-		case "md":
-			
-			break;
-
-		case "upload":
-
-			break;
-
-		case "download":
-
-			break;
-
-		case "delF":
-
-			break;
-
-		case "delD":
-
-			break;
-
-		case "rename":
-
-			break;
-			
-		case "detailF":
-
-			break;
 		}
 			
 		
 	}
 	
-	private void ls(String[] dataArray) {
-		for(int i =1; i< dataArray.length; i++) {
-		System.out.print(dataArray[i]);
-		}
-	}
 	
 	private void sendRequest(Socket socket, String request) {
 		try {
