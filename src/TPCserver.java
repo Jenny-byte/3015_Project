@@ -130,7 +130,8 @@ public class TPCserver {
 			reply = "valid";
 		}
 		
-		reply = "login " + username + " " + password;
+		reply = "login " + reply;
+		System.out.println(reply);
 		sendReply(clientSocket, reply);
 	}
 
