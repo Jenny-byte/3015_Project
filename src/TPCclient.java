@@ -51,6 +51,9 @@ public class TPCclient {
 		
 		while(!loginValid) {
 			commend = login();
+			sendRequest(socket, commend);
+			if(loginValid)
+				break;
 		}
 		
 		System.out.println("Please enter the commend:");
@@ -86,10 +89,11 @@ public class TPCclient {
 		String data = receivedData.trim();
 		String dataArray[] = data.split(" ");
 		String commend = dataArray[0];
+        System.out.print(dataArray[1]);
 
 		switch (commend) {
 		case "login":
-			if(dataArray[1] == "valid") {
+			if(dataArray[1].equals("valid")) {
 				loginValid = true;
 			}else {
 				System.out.println("Invalid login!");
@@ -136,7 +140,7 @@ public class TPCclient {
 		try {
 			DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 			byte[] data = request.getBytes();
-			out.writeInt(request.length());
+			out.writeLong(request.length());
 			out.write(request.getBytes(), 0, request.length());
 		} catch (Exception e) {
 			System.out.println("Fail to send your request.");

@@ -44,6 +44,7 @@ public class TPCserver {
 				clientSocket.getPort());
 
 		try {
+			
 			DataInputStream in = new DataInputStream(clientSocket.getInputStream());
 			while (true) {
 
@@ -51,8 +52,9 @@ public class TPCserver {
 				String receivedData = "";
 				while (size > 0) {
 					int len = in.read(buffer, 0, buffer.length);
-					receivedData += new String(buffer, 0, len);
+					receivedData = new String(buffer, 0, len);
 					size -= len;
+					System.out.print(".");
 				}
 
 				respond(clientSocket, receivedData);
@@ -116,7 +118,7 @@ public class TPCserver {
 			break;
 
 		default:
-			sendRequest(clientSocket, "UnknownCommand");
+			sendReply(clientSocket, "UnknownCommand");
 			break;
 		}
 	}
@@ -124,19 +126,20 @@ public class TPCserver {
 	private void verifyPassward(Socket clientSocket, String username, String password) {
 		String reply = "invalid";
 
-		if (password == "12345") { // valid login
+		if (password.equals("12345")) { // valid login
 			reply = "valid";
 		}
 		
-		reply = "login "+ reply;
-		sendRequest(clientSocket, reply);
+		reply = "login " + username + " " + password;
+		sendReply(clientSocket, reply);
 	}
 
-	private void sendRequest(Socket clientSocket, String reply) {
+	private void sendReply(Socket clientSocket, String reply) {
 		try {
+			
 			DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
 			byte[] data = reply.getBytes();
-			out.writeInt(reply.length());
+			out.writeLong(reply.length());
 			out.write(reply.getBytes(), 0, reply.length());
 		} catch (Exception e) {
 			System.out.println("Fail to send your reply.");
