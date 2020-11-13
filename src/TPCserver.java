@@ -70,7 +70,7 @@ public class TPCserver {
 		String data = receivedData.trim();
 		String dataArray[] = data.split(" ");
 		String commend = dataArray[0];
-
+		String path = "";
 		switch (commend) {
 		case "login":
 			String username = dataArray[1];
@@ -79,12 +79,15 @@ public class TPCserver {
 			break;
 
 		case "ls":
-			String path = dataArray[1];
-			ls(commend, clientSocket, path);
+		case "dir":
+				path = dataArray[1];
+				ls(commend, clientSocket, path);
 			break;
 
+		case "mkdir":
 		case "md":
-			// md(socket, directory);
+			path = dataArray[1];
+			md(commend, clientSocket, path);
 			break;
 
 		case "upload":
@@ -115,59 +118,76 @@ public class TPCserver {
 			try {
 				clientSocket.close();
 			} catch (Exception e) {
-				System.err.println("ERROR: Connection dropped");
+				System.out.println("Connection dropped: " + clientSocket.getInetAddress());
 			}
 			break;
 
 		default:
-			sendRequest(clientSocket, "UnknownCommand");
+			sendRespond(clientSocket, "UnknownCommand");
 			break;
 		}
 	}
 
 	private void verifyPassward(Socket clientSocket, String username, String password) {
-		String reply = "invalid";
+		String reply = "Invalid login!";
 
 		if (password.equals("12345")) { // valid login
-			reply = "valid";
+			reply = "Successful login!";
 		}
 
 		reply = "login " + reply;
 		System.out.println(reply);
-		sendRequest(clientSocket, reply);
+		sendRespond(clientSocket, reply);
 	}
 
-	private void ls(String commend, Socket clientSocket, String path) {
+	private void ls(String commend, Socket clientSocket, String path) {  //list file
 		String reply = commend;
-		File obj = new File(path); 
-		if(!obj.exists()) {
-			sendRequest(clientSocket, reply + " File Not Found!");
+		File obj = new File(path);
+		if (!obj.exists()) {
+			sendRespond(clientSocket, reply + " File Not Found!");
 			return;
 		}
-		if(obj.isDirectory()) {
+		if (obj.isDirectory()) {
 			File[] files = obj.listFiles();
-			if(files.length == 0) {
-				sendRequest(clientSocket, reply + " Empty!");
+			if (files.length == 0) {
+				sendRespond(clientSocket, reply + " Empty!");
 				return;
 			}
-			
-			for(File f: files) {
-				if(f.isDirectory()){
+
+			for (File f : files) {
+				if (f.isDirectory()) {
 					reply += new Date(f.lastModified()) + " " + " <DIR> " + f.getName() + "\n";
-				}else {
+				} else {
 					reply += new Date(f.lastModified()) + " " + f.length() + "B " + f.getName() + "\n";
 
 				}
 			}
-			sendRequest(clientSocket, reply);
-			
-		}else {
+			sendRespond(clientSocket, reply);
+
+		} else {
 			reply += new Date(obj.lastModified()) + " " + obj.length() + "B " + obj.getName() + "\n";
-			sendRequest(clientSocket, reply);
+			sendRespond(clientSocket, reply);
 		}
 	}
+	
+	private void md(String commend, Socket clientSocket, String path) { // make directory
+		String reply = commend;
+		File obj = new File(path);
+		
+		if (obj.exists()) {
+			if (obj.isDirectory())
+				reply += " Directory already exists";
+			else
+				reply += " File already exists";
+				
+		} else {
+			obj.mkdirs();
+			reply += " Subdirectory is created successfully";
+		}
+		sendRespond(clientSocket, reply);
+	}
 
-	private void sendRequest(Socket clientSocket, String reply) {
+	private void sendRespond(Socket clientSocket, String reply) {
 		try {
 			DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
 			byte[] data = reply.getBytes();

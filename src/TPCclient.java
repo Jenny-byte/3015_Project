@@ -36,14 +36,15 @@ public class TPCclient {
 						receivedData += new String(buffer, 0, len);
 						size -= len;
 					}
+
 					
-					respondReceived(socket, receivedData);
-					String data = receivedData.trim();
-					String dataArray[] = data.split(" ");
-					String commend = dataArray[0];
-					System.out.println(receivedData.substring(commend.length()+1, receivedData.length()));
+						respondLogin(socket, receivedData);
+						String data = receivedData.trim();
+						String dataArray[] = data.split(" ");
+						String commend = dataArray[0];
+						System.out.println(receivedData.substring(commend.length() + 1, receivedData.length()));
 					
-					System.out.println("Please enter the commend:");
+						System.out.println("Please enter the commend:");
 					
 				}
 			} catch (IOException ex) {
@@ -55,8 +56,8 @@ public class TPCclient {
 
 		Scanner scanner = new Scanner(System.in);
 		String commend = "";
-		
-		while(!loginValid) {
+
+		while (!loginValid) {
 			commend = login();
 			sendRequest(socket, commend);
 			try {
@@ -65,10 +66,9 @@ public class TPCclient {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			//System.out.println(loginValid);
+			// System.out.println(loginValid);
 		}
-		
-		
+
 		while (true) {
 			commend = scanner.nextLine();
 			sendRequest(socket, commend);
@@ -82,32 +82,24 @@ public class TPCclient {
 
 		System.out.println("Please enter your password:");
 		String password = scanner.nextLine().trim();
-		
-		String request = "login "+ username + " " + password;
+
+		String request = "login " + username + " " + password;
 		return request;
 	}
 
-
-	public void respondReceived(Socket socket, String receivedData) {
+	public void respondLogin(Socket socket, String receivedData) {
 		String data = receivedData.trim();
 		String dataArray[] = data.split(" ");
 		String commend = dataArray[0];
 
-		switch (commend) {
-		case "login":
-			if(dataArray[1].equals("valid")) {
+		if (commend.equals("login")) {
+			if (dataArray[1].equals("Successful")) {
 				loginValid = true;
-				System.out.println("Successful Login!");
-			}else {
-				System.out.println("Invalid login!");
-			}
-			break;
+			} 
 		}
-			
-		
+
 	}
-	
-	
+
 	private void sendRequest(Socket socket, String request) {
 		try {
 			DataOutputStream out = new DataOutputStream(socket.getOutputStream());
