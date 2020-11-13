@@ -1,6 +1,7 @@
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -67,10 +68,22 @@ public class TPCserver {
 
 	private void respond(Socket clientSocket, String receivedData) {
 
+		String input = receivedData.trim();
+		int spaceAt = input.trim().indexOf(" ");
+
+		// String directory = "";
+		// if (spaceAt > 0) {
+		// commend = input.substring(0, spaceAt);
+		// directory = input.substring(spaceAt + 1).replaceAll("\"", "").trim();
+		// } else {
+		// commend = input;
+		// }
+
 		String data = receivedData.trim();
 		String dataArray[] = data.split(" ");
 		String commend = dataArray[0];
 		String path = "";
+
 		switch (commend) {
 		case "login":
 			String username = dataArray[1];
@@ -80,8 +93,8 @@ public class TPCserver {
 
 		case "ls":
 		case "dir":
-				path = dataArray[1];
-				ls(commend, clientSocket, path);
+			path = dataArray[1];
+			ls(commend, clientSocket, path);
 			break;
 
 		case "mkdir":
@@ -91,6 +104,8 @@ public class TPCserver {
 			break;
 
 		case "upload":
+			path = dataArray[1];
+			upload(commend, clientSocket, path);
 
 			break;
 
@@ -118,12 +133,12 @@ public class TPCserver {
 			try {
 				clientSocket.close();
 			} catch (Exception e) {
-				System.out.println("Connection dropped: " + clientSocket.getInetAddress());
+				System.out.println("Connection dropped! ");
 			}
 			break;
 
 		default:
-			sendRespond(clientSocket, "UnknownCommand");
+			sendRespond(clientSocket, commend + " Unknown Command!");
 			break;
 		}
 	}
@@ -140,7 +155,7 @@ public class TPCserver {
 		sendRespond(clientSocket, reply);
 	}
 
-	private void ls(String commend, Socket clientSocket, String path) {  //list file
+	private void ls(String commend, Socket clientSocket, String path) { // list file
 		String reply = commend;
 		File obj = new File(path);
 		if (!obj.exists()) {
@@ -169,22 +184,60 @@ public class TPCserver {
 			sendRespond(clientSocket, reply);
 		}
 	}
-	
+
 	private void md(String commend, Socket clientSocket, String path) { // make directory
 		String reply = commend;
 		File obj = new File(path);
-		
+
 		if (obj.exists()) {
 			if (obj.isDirectory())
 				reply += " Directory already exists";
 			else
 				reply += " File already exists";
-				
+
 		} else {
 			obj.mkdirs();
 			reply += " Subdirectory is created successfully";
 		}
 		sendRespond(clientSocket, reply);
+	}
+
+	private void upload(String commend, Socket clientSocket, String path) {
+		
+		String reply = commend + " ";
+		byte[] buffer = new byte[1024];
+		try {
+			DataInputStream in = new DataInputStream(clientSocket.getInputStream());
+			
+			int nameLen = in.readInt();
+			in.read(buffer, 0, nameLen);
+			String name = new String(buffer, 0, nameLen);
+
+			System.out.print("Downloading file %s " + name);
+
+			long size = in.readLong();
+			System.out.printf("(%d)", size);
+
+			
+			File file = new File(name);
+			FileOutputStream out = new FileOutputStream(file);
+
+			while(size > 0) {
+				int len = in.read(buffer, 0, buffer.length);
+				out.write(buffer, 0, len);
+				size -= len;
+				System.out.print(".");
+			}
+			
+			reply += name + " (" + size + ") is successful uploaded.";
+			sendRespond(clientSocket, reply);
+			
+			in.close();
+			out.close();
+		} catch (IOException e) {
+			reply += "Unable to download file.";
+			sendRespond(clientSocket, reply);
+		}
 	}
 
 	private void sendRespond(Socket clientSocket, String reply) {

@@ -1,5 +1,7 @@
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.Socket;
@@ -36,14 +38,12 @@ public class TPCclient {
 						receivedData += new String(buffer, 0, len);
 						size -= len;
 					}
-
 					
 						respondLogin(socket, receivedData);
 						String data = receivedData.trim();
 						String dataArray[] = data.split(" ");
 						String commend = dataArray[0];
 						System.out.println(receivedData.substring(commend.length() + 1, receivedData.length()));
-					
 						System.out.println("Please enter the commend:");
 					
 				}
@@ -71,10 +71,58 @@ public class TPCclient {
 
 		while (true) {
 			commend = scanner.nextLine();
+			String data = commend.trim();
+			String dataArray[] = data.split(" ");
+			if(dataArray[0].equals("upload")) {
+				upload(socket, commend.substring(dataArray[0].length() + 1, commend.length()));
+			}else {
 			sendRequest(socket, commend);
+			}
 		}
 	}
+	public void upload(Socket socket, String path){
 
+		File file = new File(path);
+		
+		if (!file.exists()) {
+			System.err.println( "File " + path + " doesn't exist.");
+			return;
+		}
+		if (file.isDirectory()) {
+			System.err.println(path + " is a directory which can't be uploaded.");
+			return;
+		}	
+		
+		try {
+			FileInputStream in = new FileInputStream(file);
+			DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+			
+			out.writeInt(file.getName().length());
+			out.write(file.getName().getBytes());
+			
+			long size = file.length();
+			out.writeLong(size);
+			
+			System.out.print(file.getName() + " (size: " + size + "B) is uploading");
+			
+			byte[] buffer = new byte[1024];
+			while(size > 0) {
+				int len = in.read(buffer, 0, buffer.length);
+				out.write(buffer, 0, len);
+				size -= len;
+				System.out.print(".");
+			}
+			
+			System.out.println("\n" + path + " is uploaded sucessfully.");
+			in.close();
+			out.close();		
+			
+			
+		} catch (IOException e) {
+			System.err.println( path + " upload is failed.");
+		}
+	}
+	
 	public String login() {
 		System.out.println("Please enter your username:");
 		Scanner scanner = new Scanner(System.in);
