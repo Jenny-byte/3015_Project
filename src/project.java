@@ -59,22 +59,23 @@ public class project {
 		DatagramPacket packet = new DatagramPacket(computerName.getBytes(), computerName.length(),
 				InetAddress.getByName("255.255.255.255"), port);
 
-		socket.send(packet);
+		
 		System.out.println("Searching servers...");
 		while (true) {
-
+			socket.send(packet); // keep on broadcasting
 			DatagramPacket receivedPacket = new DatagramPacket(new byte[1024], 1024);
 			socket.receive(receivedPacket);
 			String receivedData = new String(receivedPacket.getData(), 0, receivedPacket.getLength());
 			String srcAddr = receivedPacket.getAddress().toString();
 
-			if (!receivedData.equals(computerName) && !checkPacketExitInList(receivedData)) {
+			if (!receivedData.equals(computerName) && !checkPacketExitInList(receivedData)) { 
 				// System.out.println("Searching servers...");
 				synchronized (clientList) {
 					clientList.add(receivedPacket);
 					// printList(clientList);
 				}
 
+				// reply the computer name 
 				packet = new DatagramPacket(computerName.getBytes(), computerName.length(), receivedPacket.getAddress(),
 						receivedPacket.getPort());
 				socket.send(packet);
@@ -185,14 +186,6 @@ public class project {
 
 	}
 
-
-	// public void login() {
-	// System.out.println("Please enter your username:");
-	// String username = scanner.nextLine().trim();
-	//
-	// System.out.println("Please enter your password:");
-	// String password = scanner.nextLine().trim();
-	// }
 
 	public static void main(String[] args) throws IOException {
 		project s = new project();

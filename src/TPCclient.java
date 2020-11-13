@@ -7,9 +7,8 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 public class TPCclient {
-	
 
-	public TPCclient(String server, int tcpPort) throws IOException{
+	public TPCclient(String server, int tcpPort) throws IOException {
 
 		try {
 			tpcClient(server, tcpPort);
@@ -28,10 +27,15 @@ public class TPCclient {
 			try {
 				DataInputStream in = new DataInputStream(socket.getInputStream());
 				while (true) {
+					
+					
 					int len = in.readInt();
 					in.read(buffer, 0, len);
 					System.out.println(new String(buffer, 0, len));
 				}
+				
+				
+				
 			} catch (IOException ex) {
 				System.err.println("Connection dropped!");
 				System.exit(-1);
@@ -40,20 +44,41 @@ public class TPCclient {
 		t.start();
 
 		Scanner scanner = new Scanner(System.in);
-
-		System.out.println("Please input your name:");
-		String name = scanner.nextLine().trim();
-
-		System.out.println("Please input messages:");
+		
+		System.out.println("Please enter the commend:");
+		int commendNum = scanner.nextInt();
 
 		while (true) {
 			// String str = scanner.nextLine();
-			String str = name + ": " + scanner.nextLine();
-			DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-			out.writeInt(str.length());
-			out.write(str.getBytes(), 0, str.length());
+			String str = replyCommend(commendNum);
+			sendReply(socket, str);
 		}
 	}
+
+	public void login() {
+		System.out.println("Please enter your username:");
+		Scanner scanner = new Scanner(System.in);
+		String username = scanner.nextLine().trim();
+
+		System.out.println("Please enter your password:");
+		String password = scanner.nextLine().trim();
+	}
 	
+	public String replyCommend(int commendNum) {
+		String reply = "";
+		
+		return reply;
+	}
+	
+private void sendReply(Socket socket, String reply) {
+		try {
+			DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+			byte[] data = reply.getBytes();
+			out.writeInt(reply.length());
+			out.write(reply.getBytes(), 0, reply.length());
+		} catch (Exception e) {
+			System.out.println("ERROR: Fail to send your reply.");
+		}
+	}
 
 }
