@@ -71,41 +71,42 @@ public class TPCserver {
 		String input = receivedData.trim();
 		int spaceAt = input.trim().indexOf(" ");
 
-		// String directory = "";
-		// if (spaceAt > 0) {
-		// commend = input.substring(0, spaceAt);
-		// directory = input.substring(spaceAt + 1).replaceAll("\"", "").trim();
-		// } else {
-		// commend = input;
-		// }
+		String command, argu = "";
+		if(spaceAt > 0) {
+			command = input.substring(0, spaceAt);
+			argu = input.substring(spaceAt + 1).replaceAll("\"","").trim();
+		}else {
+			command = input;
+		}
 
-		String data = receivedData.trim();
-		String dataArray[] = data.split(" ");
-		String commend = dataArray[0];
-		String path = "";
+//		String data = receivedData.trim();
+//		String dataArray[] = data.split(" ");
+//		String commend = dataArray[0];
+//		String path = "";
 
-		switch (commend) {
+		switch (command) {
 		case "login":
-			String username = dataArray[1];
-			String password = dataArray[2];
+			String dataArray[] = argu.split(" ");
+			String username = dataArray[0];
+			String password = dataArray[1];
 			verifyPassward(clientSocket, username, password);
 			break;
 
 		case "ls":
 		case "dir":
-			path = dataArray[1];
-			ls(commend, clientSocket, path);
+			if (argu.length() == 1)
+				ls(command, clientSocket, ".");
+			else
+				ls(command, clientSocket, argu);
 			break;
 
 		case "mkdir":
 		case "md":
-			path = dataArray[1];
-			md(commend, clientSocket, path);
+			md(command, clientSocket, argu);
 			break;
 
 		case "upload":
-			path = dataArray[1];
-			upload(commend, clientSocket, path);
+			upload(command, clientSocket, argu);
 
 			break;
 
@@ -138,7 +139,7 @@ public class TPCserver {
 			break;
 
 		default:
-			sendRespond(clientSocket, commend + " Unknown Command!");
+			sendRespond(clientSocket, command + " Unknown Command!");
 			break;
 		}
 	}
@@ -155,8 +156,8 @@ public class TPCserver {
 		sendRespond(clientSocket, reply);
 	}
 
-	private void ls(String commend, Socket clientSocket, String path) { // list file
-		String reply = commend;
+	private void ls(String command, Socket clientSocket, String path) { // list file
+		String reply = command;
 		File obj = new File(path);
 		if (!obj.exists()) {
 			sendRespond(clientSocket, reply + " File Not Found!");
@@ -185,8 +186,8 @@ public class TPCserver {
 		}
 	}
 
-	private void md(String commend, Socket clientSocket, String path) { // make directory
-		String reply = commend;
+	private void md(String command, Socket clientSocket, String path) { // make directory
+		String reply = command;
 		File obj = new File(path);
 
 		if (obj.exists()) {
@@ -202,9 +203,9 @@ public class TPCserver {
 		sendRespond(clientSocket, reply);
 	}
 
-	private void upload(String commend, Socket clientSocket, String path) {
+	private void upload(String command, Socket clientSocket, String path) {
 		
-		String reply = commend + " ";
+		String reply = command + " ";
 		byte[] buffer = new byte[1024];
 		try {
 			DataInputStream in = new DataInputStream(clientSocket.getInputStream());
