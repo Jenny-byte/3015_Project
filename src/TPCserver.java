@@ -79,11 +79,6 @@ public class TPCserver {
 			command = input;
 		}
 
-//		String data = receivedData.trim();
-//		String dataArray[] = data.split(" ");
-//		String commend = dataArray[0];
-//		String path = "";
-
 		switch (command) {
 		case "login":
 			String dataArray[] = argu.split(" ");
@@ -94,7 +89,7 @@ public class TPCserver {
 
 		case "ls":
 		case "dir":
-			if (argu.length() == 1)
+			if (argu.length() == 0)
 				ls(command, clientSocket, ".");
 			else
 				ls(command, clientSocket, argu);
@@ -130,6 +125,10 @@ public class TPCserver {
 
 			break;
 
+		case "":
+			sendRespond(clientSocket, "No Please enter a commend!");
+			break;
+			
 		case "exit":
 			try {
 				clientSocket.close();
