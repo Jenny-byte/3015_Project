@@ -61,7 +61,7 @@ public class TPCclient {
 			commend = login();
 			sendRequest(socket, commend);
 			try {
-				Thread.sleep(500);
+				Thread.sleep(700);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

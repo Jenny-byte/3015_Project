@@ -72,10 +72,10 @@ public class TPCserver {
 		int spaceAt = input.trim().indexOf(" ");
 
 		String command, argu = "";
-		if(spaceAt > 0) {
+		if (spaceAt > 0) {
 			command = input.substring(0, spaceAt);
-			argu = input.substring(spaceAt + 1).replaceAll("\"","").trim();
-		}else {
+			argu = input.substring(spaceAt + 1).replaceAll("\"", "").trim();
+		} else {
 			command = input;
 		}
 
@@ -110,25 +110,35 @@ public class TPCserver {
 			break;
 
 		case "delF":
-
+			delF(command, clientSocket, argu);
 			break;
 
 		case "delD":
-
+			delD(command, clientSocket, argu);
 			break;
 
 		case "rename":
-
+			String dataArray1[] = argu.split(" ");
+			String path = dataArray1[0];
+			String newName = dataArray1[1];
+			rename(command, clientSocket, path, newName);
 			break;
 
 		case "detailF":
-
+			detailF(command, clientSocket, argu);
 			break;
 
+		case "moveF":
+			String dataArray2[] = argu.split(" ");
+			String OriginalPath = dataArray2[0];
+			String endDirection = dataArray2[1];
+			moveF(command, clientSocket, OriginalPath, endDirection);
+			break;
+			
 		case "":
 			sendRespond(clientSocket, "No Please enter a commend!");
 			break;
-			
+
 		case "exit":
 			try {
 				clientSocket.close();
@@ -202,13 +212,122 @@ public class TPCserver {
 		sendRespond(clientSocket, reply);
 	}
 
-	private void upload(String command, Socket clientSocket, String path) {
+	private void delF(String command, Socket clientSocket, String path) { // delete a file
+		String reply = command;
+		File obj = new File(path);
+
+		if (!obj.exists()) {
+			reply += " File Not Found!";
+		} else {
+			if (obj.isDirectory()) {
+				reply += " To delete a directory, you should use delD command";
+			} else {
+				obj.delete();
+				reply += " Successfully delete!";
+			}
+		}
+		sendRespond(clientSocket, reply);
+	}
+
+	private void delD(String command, Socket clientSocket, String path) { // delete a subdirectories
+		String reply = command;
+		File obj = new File(path);
+
+		if (!obj.exists()) {
+			reply += " File Not Found!";
+		} else {
+			if (obj.isDirectory()) {
+
+				File[] files = obj.listFiles();
+				if (files.length == 0) {
+					obj.delete();
+				} else {
+					for (File f : obj.listFiles()) {
+						f.delete(); // delete the file in directory
+
+					}
+					obj.delete(); // delete the empty directory
+				}
+				reply += " Successfully delete!";
+			} else {
+				reply += "To delete a file, you should use delF command";
+			}
+		}
+		sendRespond(clientSocket, reply);
+	}
+	
+	private void rename(String command, Socket clientSocket, String path, String newName) { // rename
+		String reply = command;
+		File obj = new File(path);
+		String oldName = obj.getName();
+		File newFile = new File(obj.getParent() + File.separator + newName);
+		if (!obj.exists()) {
+			reply += " File Not Found!";
+		} else {
+			if (newName.equals(oldName)) {
+				reply += " The new name equals to old name";
+			} else if (newFile.exists()) {
+				reply += " The new name of file already exists";
+			} else {
+				if (obj.renameTo(newFile)) {
+					reply += " Successfully rename!";
+				} else {
+					reply += " Rename failed!";
+				}
+			}
+		}
+		sendRespond(clientSocket, reply);
+	}
+
+	private void detailF(String command, Socket clientSocket, String path) { // show file's name,path,size,last modified time 
+		String reply = command;
+		File obj = new File(path);
 		
+		if (!obj.exists()) {
+			reply += " File Not Found!";
+		}
+		else {
+			reply +=" name: "+ obj.getName() +
+					"/n path: " + obj.getAbsolutePath() +
+					"/n last modified time: " + new Date(obj.lastModified()) + 
+			        "/n size: " + obj.length();
+		}
+		sendRespond(clientSocket, reply);
+	}
+	
+	private void moveF(String command, Socket clientSocket, String path, String direction) { // move the file to another  directory  
+		
+		String reply = command;
+		File startFile = new File(path);
+		
+		File endDirection = new File(direction);
+		if (!endDirection.exists()) {//if no such directory, create 
+			endDirection.mkdirs();
+		}
+
+		File endFile = new File(endDirection + File.separator + startFile.getName());
+
+		try {
+			if (startFile.renameTo(endFile)) {
+				reply += " File moved successfully! " + "/n Source path: " + startFile.getAbsolutePath()
+						+ "/n Target path: " + endFile.getAbsolutePath();
+			} else {
+				reply += " File moved failed! " + "/n Source path: " + startFile.getAbsolutePath() + "/n Target path: "
+						+ endFile.getAbsolutePath();
+			}
+		} catch (Exception e) {
+			reply += " Error!";
+		}
+
+		sendRespond(clientSocket, reply);
+	}
+	private void upload(String command, Socket clientSocket, String path) {
+
 		String reply = command + " ";
 		byte[] buffer = new byte[1024];
 		try {
 			DataInputStream in = new DataInputStream(clientSocket.getInputStream());
-			
+
 			int nameLen = in.readInt();
 			in.read(buffer, 0, nameLen);
 			String name = new String(buffer, 0, nameLen);
@@ -218,20 +337,19 @@ public class TPCserver {
 			long size = in.readLong();
 			System.out.printf("(%d)", size);
 
-			
 			File file = new File(name);
 			FileOutputStream out = new FileOutputStream(file);
 
-			while(size > 0) {
+			while (size > 0) {
 				int len = in.read(buffer, 0, buffer.length);
 				out.write(buffer, 0, len);
 				size -= len;
 				System.out.print(".");
 			}
-			
+
 			reply += name + " (" + size + ") is successful uploaded.";
 			sendRespond(clientSocket, reply);
-			
+
 			in.close();
 			out.close();
 		} catch (IOException e) {

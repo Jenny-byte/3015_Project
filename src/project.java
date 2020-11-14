@@ -55,6 +55,7 @@ public class project {
 
 	public void udpServer(int port, String computerName) throws IOException {
 
+		// remove client, not yet finished
 		DatagramSocket socket = new DatagramSocket(port);
 		DatagramPacket packet = new DatagramPacket(computerName.getBytes(), computerName.length(),
 				InetAddress.getByName("255.255.255.255"), port);
