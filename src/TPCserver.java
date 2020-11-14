@@ -113,7 +113,7 @@ public class TPCserver {
 			delF(command, clientSocket, argu);
 			break;
 
-		case "delD":  // only can del empty directory //forceDelD
+		case "delD":  // only can del empty directory 
 			delD(command, clientSocket, argu);
 			break;
 
@@ -287,7 +287,12 @@ public class TPCserver {
 		String reply = command;
 		File obj = new File(path);
 		String oldName = obj.getName();
-		File newFile = new File(obj.getParent() + "/" + newName);
+		File newFile;
+		if(obj.getParent() == null) {
+			newFile = new File(newName);
+		}else {
+			newFile = new File(obj.getParent() + File.separator + newName);
+		}
 		if (!obj.exists()) {
 			reply += " File Not Found!";
 		} else {
