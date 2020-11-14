@@ -14,11 +14,9 @@ public class project {
 
 	public project() throws IOException {
 
-		String computerName = inputComputerName();
-
 		Thread t1 = new Thread(() -> {
 			try {
-				udpServer(9998, computerName);
+				udpServer(9998);
 
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -45,21 +43,17 @@ public class project {
 		t3.start();
 	}
 
-	public String inputComputerName() {
-		Scanner scanner = new Scanner(System.in);
-		System.out.println("Please input your computer name:");
-		String computerName = scanner.nextLine().trim();
-		return computerName;
 
-	}
-
-	public void udpServer(int port, String computerName) throws IOException {
+	public void udpServer(int port) throws IOException {
 
 		// remove client, not yet finished
+		InetAddress myIp = InetAddress.getLocalHost();
+		String computerName = myIp.getHostName();
+		System.out.println("My computer name: " + computerName);
 		DatagramSocket socket = new DatagramSocket(port);
 		DatagramPacket packet = new DatagramPacket(computerName.getBytes(), computerName.length(),
 				InetAddress.getByName("255.255.255.255"), port);
-
+        
 		socket.send(packet); // keep on broadcasting
 		System.out.println("Searching servers...");
 		while (true) {
