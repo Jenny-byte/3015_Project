@@ -96,6 +96,7 @@ public class TPCclient {
 		try {
 			FileInputStream in = new FileInputStream(file);
 			DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+			//String request = "upload ";
 			
 			out.writeInt(file.getName().length());
 			out.write(file.getName().getBytes());
@@ -106,6 +107,7 @@ public class TPCclient {
 			System.out.print(file.getName() + " (size: " + size + "B) is uploading");
 			
 			byte[] buffer = new byte[1024];
+			
 			while(size > 0) {
 				int len = in.read(buffer, 0, buffer.length);
 				out.write(buffer, 0, len);
@@ -114,8 +116,8 @@ public class TPCclient {
 			}
 			
 			System.out.println("\n" + path + " is uploaded sucessfully.");
-			in.close();
-			out.close();		
+//			in.close();
+//			out.close();		
 			
 			
 		} catch (IOException e) {

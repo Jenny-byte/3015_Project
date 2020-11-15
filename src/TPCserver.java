@@ -388,8 +388,8 @@ public class TPCserver {
 			reply += name + " (" + size + ") is successful uploaded.";
 			sendRespond(clientSocket, reply);
 
-			in.close();
-			out.close();
+//			in.close();
+//			out.close();
 		} catch (IOException e) {
 			reply += "Unable to download file.";
 			sendRespond(clientSocket, reply);

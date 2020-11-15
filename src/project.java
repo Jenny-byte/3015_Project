@@ -46,7 +46,6 @@ public class project {
 
 	public void udpServer(int port) throws IOException {
 
-		// remove client, not yet finished
 		InetAddress myIp = InetAddress.getLocalHost();
 		String computerName = myIp.getHostName();
 		System.out.println("My computer name: " + computerName);
@@ -54,10 +53,9 @@ public class project {
 		DatagramPacket packet = new DatagramPacket(computerName.getBytes(), computerName.length(),
 				InetAddress.getByName("255.255.255.255"), port);
         
-		socket.send(packet); // keep on broadcasting
+		socket.send(packet); 
 		System.out.println("Searching servers...");
 		while (true) {
-			
 			DatagramPacket receivedPacket = new DatagramPacket(new byte[1024], 1024);
 			socket.receive(receivedPacket);
 			String receivedData = new String(receivedPacket.getData(), 0, receivedPacket.getLength());
@@ -74,9 +72,17 @@ public class project {
 				packet = new DatagramPacket(computerName.getBytes(), computerName.length(), receivedPacket.getAddress(),
 						receivedPacket.getPort());
 				socket.send(packet);
-
 			}
-
+			try {
+				Thread.sleep(10);
+				synchronized (clientList) {
+					clientList.clear();
+				}
+				socket.send(packet);  // keep on broadcasting every 0.1s
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 
