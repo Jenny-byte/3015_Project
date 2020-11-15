@@ -10,7 +10,7 @@ public class project {
 	ServerSocket srvSocket;
 	ArrayList<DatagramPacket> clientList = new ArrayList<DatagramPacket>();
 	// ArrayList<Socket> list = new ArrayList<Socket>();
-	//boolean isRunning = true;
+	// boolean isRunning = true;
 
 	public project() throws IOException {
 
@@ -34,15 +34,14 @@ public class project {
 		Thread t3 = new Thread(() -> {
 			try {
 				TPCserver tpcServer = new TPCserver(9999);
-				
+
 			} catch (IOException e) {
-				
+
 				e.printStackTrace();
 			}
 		});
 		t3.start();
 	}
-
 
 	public void udpServer(int port) throws IOException {
 
@@ -52,36 +51,26 @@ public class project {
 		DatagramSocket socket = new DatagramSocket(port);
 		DatagramPacket packet = new DatagramPacket(computerName.getBytes(), computerName.length(),
 				InetAddress.getByName("255.255.255.255"), port);
-        
-		socket.send(packet); 
+
+		socket.send(packet);
 		System.out.println("Searching servers...");
 		while (true) {
+			socket.send(packet);
 			DatagramPacket receivedPacket = new DatagramPacket(new byte[1024], 1024);
 			socket.receive(receivedPacket);
 			String receivedData = new String(receivedPacket.getData(), 0, receivedPacket.getLength());
 			String srcAddr = receivedPacket.getAddress().toString();
 
-			if (!receivedData.equals(computerName) && !checkPacketExitInList(receivedData)) { 
-				// System.out.println("Searching servers...");
+			// only the computerName is different can be added to the list
+			if (!receivedData.equals(computerName) && !checkPacketExitInList(receivedData)) {
 				synchronized (clientList) {
 					clientList.add(receivedPacket);
-					// printList(clientList);
 				}
 
-				// reply the computer name 
+				// reply the computer name
 				packet = new DatagramPacket(computerName.getBytes(), computerName.length(), receivedPacket.getAddress(),
 						receivedPacket.getPort());
 				socket.send(packet);
-			}
-			try {
-				Thread.sleep(10);
-				synchronized (clientList) {
-					clientList.clear();
-				}
-				socket.send(packet);  // keep on broadcasting every 0.1s
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			}
 		}
 	}
@@ -134,7 +123,7 @@ public class project {
 				System.out.println("bye!");
 				welcome = false;
 				System.exit(0);
-				
+
 			} else {
 				System.out.println("Invalid input!");
 			}
@@ -163,8 +152,7 @@ public class project {
 				String ipAddress = chosenPacket.getAddress().toString();
 				ipAddress = ipAddress.substring(1, ipAddress.length());
 				System.out.println("Chosen server: " + computerName + " with IP address " + ipAddress);
-				
-				
+
 				String s = null;
 				int p = 0;
 				try {
@@ -186,7 +174,6 @@ public class project {
 		}
 
 	}
-
 
 	public static void main(String[] args) throws IOException {
 		project s = new project();
