@@ -59,7 +59,6 @@ public class TPCserver {
 				}
 
 				respond(clientSocket, receivedData);
-
 			}
 		} catch (Exception e) {
 			System.err.println("ERROR: Connection dropped");
@@ -87,7 +86,7 @@ public class TPCserver {
 			verifyPassward(clientSocket, username, password);
 			break;
 
-		case "ls":
+		case "ls": // 1 List all the file including some details
 		case "dir":
 			if (argu.length() == 0)
 				ls(command, clientSocket, ".");
@@ -95,50 +94,51 @@ public class TPCserver {
 				ls(command, clientSocket, argu);
 			break;
 
-		case "mkdir":
+		case "mkdir":  // 2 Create a directory with a name that do not exist
 		case "md":
 			md(command, clientSocket, argu);
 			break;
 
-		case "upload":
+		case "upload": // 3 Client upload file
 			upload(command, clientSocket, argu);
 
 			break;
 
-		case "download":
+		case "download": // 3 Client download file
 
 			break;
 
-		case "delF":
+		case "delF": // 4 Only can delete file
 			delF(command, clientSocket, argu);
 			break;
 
-		case "delD":  // only can del empty directory 
+		case "delD": // 5 Only can delete empty directory
 			delD(command, clientSocket, argu);
 			break;
 
-		case "forceDelD":
+		case "forceDelD": // Can force delete directory with things inside
 			forceDelD(command, clientSocket, argu);
 			break;
-			
-		case "rename":
+
+		case "rename": // 6 Change the name of the file
 			String dataArray1[] = argu.split(" ");
 			String path = dataArray1[0];
 			String newName = dataArray1[1];
 			rename(command, clientSocket, path, newName);
 			break;
 
+			// 7 Only can show the detail (file's name,path,size,last modified time) of files, not directory
 		case "detailF":
 			detailF(command, clientSocket, argu);
 			break;
 
-		case "moveF":
+		case "moveF": // Move the file to a different path
 			String dataArray2[] = argu.split(" ");
 			String OriginalPath = dataArray2[0];
 			String endDirection = dataArray2[1];
 			moveF(command, clientSocket, OriginalPath, endDirection);
 			break;
-			
+
 		case "":
 			sendRespond(clientSocket, "No Please enter a commend!");
 			break;
@@ -246,7 +246,7 @@ public class TPCserver {
 				if (files.length == 0) {
 					obj.delete();
 				} else {
-					reply+=" To delete non-empty directory, you should use forceDelD command";
+					reply += " To delete non-empty directory, you should use forceDelD command";
 				}
 				reply += " Successfully delete!";
 			} else {
@@ -255,8 +255,9 @@ public class TPCserver {
 		}
 		sendRespond(clientSocket, reply);
 	}
-	
-	private void forceDelD(String command, Socket clientSocket, String path) { // Force delete a directory although it has something
+
+	private void forceDelD(String command, Socket clientSocket, String path) { // Force delete a directory although it
+																				// has something
 		String reply = command;
 		File obj = new File(path);
 
@@ -282,15 +283,15 @@ public class TPCserver {
 		}
 		sendRespond(clientSocket, reply);
 	}
-	
-	private void rename(String command, Socket clientSocket, String path, String newName) { // rename // fail
+
+	private void rename(String command, Socket clientSocket, String path, String newName) { // rename
 		String reply = command;
 		File obj = new File(path);
 		String oldName = obj.getName();
 		File newFile;
-		if(obj.getParent() == null) {
+		if (obj.getParent() == null) {
 			newFile = new File(newName);
-		}else {
+		} else {
 			newFile = new File(obj.getParent() + File.separator + newName);
 		}
 		if (!obj.exists()) {
@@ -311,30 +312,32 @@ public class TPCserver {
 		sendRespond(clientSocket, reply);
 	}
 
-	private void detailF(String command, Socket clientSocket, String path) { // show file's name,path,size,last modified time 
+	// show file's name,path,size,last modified time
+	private void detailF(String command, Socket clientSocket, String path) { 
+		
 		String reply = command;
 		File obj = new File(path);
-		
+
 		if (!obj.exists()) {
 			reply += " File Not Found!";
-		}
-		else {
-			reply +=" name: "+ obj.getName() + "\n"+
-					"path: " + obj.getAbsolutePath() + "\n " +
-					"last modified time: " + new Date(obj.lastModified()) + "\n" +
-			        "size: " + obj.length();
+		} else if (obj.isDirectory()) {
+			reply += " It is a directory! You only can read the detail of the file.";
+		} else {
+			reply += " name: " + obj.getName() + "\n" + "path: " + obj.getAbsolutePath() + "\n "
+					+ "last modified time: " + new Date(obj.lastModified()) + "\n" + "size: " + obj.length();
 		}
 		sendRespond(clientSocket, reply);
 	}
-	
-	private void moveF(String command, Socket clientSocket, String path, String direction) { // move the file to another  directory  
-		// Can't move to directory that not exist
-		
+
+	// move the file to another directory
+	// Can't move to directory that not exist
+	private void moveF(String command, Socket clientSocket, String path, String direction) { 
+
 		String reply = command;
 		File startFile = new File(path);
-		
+
 		File endDirection = new File(direction);
-		if (!endDirection.exists()) {//if no such directory, create 
+		if (!endDirection.exists()) {// if no such directory, create
 			reply += " Can't move to directory that not exist";
 			sendRespond(clientSocket, reply);
 		}
@@ -355,7 +358,7 @@ public class TPCserver {
 
 		sendRespond(clientSocket, reply);
 	}
-	
+
 	private void upload(String command, Socket clientSocket, String path) {
 
 		String reply = command + " ";

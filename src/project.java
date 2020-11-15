@@ -10,7 +10,7 @@ public class project {
 	ServerSocket srvSocket;
 	ArrayList<DatagramPacket> clientList = new ArrayList<DatagramPacket>();
 	// ArrayList<Socket> list = new ArrayList<Socket>();
-	boolean isRunning = true;
+	//boolean isRunning = true;
 
 	public project() throws IOException {
 
