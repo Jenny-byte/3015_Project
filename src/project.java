@@ -57,13 +57,6 @@ public class project {
 		socket.send(packet);
 		System.out.println("Searching servers...");
 		while (true) {
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			socket.send(packet);
 			DatagramPacket receivedPacket = new DatagramPacket(new byte[1024], 1024);
 			socket.receive(receivedPacket);
 			String receivedData = new String(receivedPacket.getData(), 0, receivedPacket.getLength());
@@ -81,6 +74,13 @@ public class project {
 						receivedPacket.getPort());
 				socket.send(packet);
 			}
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			socket.send(packet);
 		}
 	}
 
