@@ -59,6 +59,7 @@ public class TPCserver {
 				}
 
 				respond(clientSocket, receivedData);
+
 			}
 		} catch (Exception e) {
 			System.err.println("ERROR: Connection dropped");
@@ -86,7 +87,7 @@ public class TPCserver {
 			verifyPassward(clientSocket, username, password);
 			break;
 
-		case "ls": // 1 List all the file including some details
+		case "ls": // 1. List all the file including some details
 		case "dir":
 			if (argu.length() == 0)
 				ls(command, clientSocket, ".");
@@ -94,25 +95,28 @@ public class TPCserver {
 				ls(command, clientSocket, argu);
 			break;
 
-		case "mkdir":  // 2 Create a directory with a name that do not exist
+		case "mkdir": // 2. Create a directory with a name that do not exist
 		case "md":
 			md(command, clientSocket, argu);
 			break;
 
-		case "upload": // 3 Client upload file
+		case "upload": // 3. Client upload file
 			upload(command, clientSocket);
-
 			break;
 
-		case "download": // 3 Client download file
-
+		case "download": // 3. Client download file
+			if (argu == "") {
+				sendRespond(clientSocket, command + " Invalid command.");
+			} else {
+				download(command, clientSocket, argu);
+			}
 			break;
 
-		case "delF": // 4 Only can delete file
+		case "delF": // 4. Only can delete file
 			delF(command, clientSocket, argu);
 			break;
 
-		case "delD": // 5 Only can delete empty directory
+		case "delD": // 5. Only can delete empty directory
 			delD(command, clientSocket, argu);
 			break;
 
@@ -120,14 +124,15 @@ public class TPCserver {
 			forceDelD(command, clientSocket, argu);
 			break;
 
-		case "rename": // 6 Change the name of the file
+		case "rename": // 6. Change the name of the file
 			String dataArray1[] = argu.split(" ");
 			String path = dataArray1[0];
 			String newName = dataArray1[1];
 			rename(command, clientSocket, path, newName);
 			break;
 
-			// 7 Only can show the detail (file's name,path,size,last modified time) of files, not directory
+		// 7. Only can show the detail (file's name,path,size,last modified time) of
+		// files, not directory
 		case "detailF":
 			detailF(command, clientSocket, argu);
 			break;
@@ -313,8 +318,8 @@ public class TPCserver {
 	}
 
 	// show file's name,path,size,last modified time
-	private void detailF(String command, Socket clientSocket, String path) { 
-		
+	private void detailF(String command, Socket clientSocket, String path) {
+
 		String reply = command;
 		File obj = new File(path);
 
@@ -331,7 +336,7 @@ public class TPCserver {
 
 	// move the file to another directory
 	// Can't move to directory that not exist
-	private void moveF(String command, Socket clientSocket, String path, String direction) { 
+	private void moveF(String command, Socket clientSocket, String path, String direction) {
 
 		String reply = command;
 		File startFile = new File(path);
@@ -361,9 +366,9 @@ public class TPCserver {
 
 	private void upload(String command, Socket clientSocket) {
 		byte[] buffer = new byte[1024];
-		
+
 		String reply = command + " ";
-		
+
 		try {
 			DataInputStream in = new DataInputStream(clientSocket.getInputStream());
 
@@ -371,10 +376,8 @@ public class TPCserver {
 			in.read(buffer, 0, nameLen);
 			String name = new String(buffer, 0, nameLen);
 
-			System.out.print("Downloading file %s " + name);
-
-			long size = in.readLong();
-			System.out.printf("(%d)", size);
+			long size1 = in.readLong();
+			long size = size1;
 
 			File file = new File(name);
 			FileOutputStream out = new FileOutputStream(file);
@@ -383,17 +386,61 @@ public class TPCserver {
 				int len = in.read(buffer, 0, buffer.length);
 				out.write(buffer, 0, len);
 				size -= len;
-				System.out.print(".");
 			}
 
-			reply += name + " (" + size + ") is successful uploaded.";
+			reply += name + " (size: " + size1 + "B) is successfully uploaded.";
 			sendRespond(clientSocket, reply);
-			
+
 			out.close();
 		} catch (IOException e) {
 			reply += "Unable to download file.";
 			sendRespond(clientSocket, reply);
 		}
+	}
+
+	private void download(String command, Socket clientSocket, String filename) {
+
+		String reply = command + " ";
+		try {
+			File file = new File(filename);
+
+			if (!file.exists()) {
+				reply += "File " + filename + " doesn't exist.";
+				sendRespond(clientSocket, reply);
+
+			} else if (file.isDirectory()) {
+				reply += filename + " is a directory which can't be download.";
+				sendRespond(clientSocket, reply);
+
+			} else {
+				sendRespond(clientSocket, "downloadReady");
+
+				Thread.sleep(100);
+
+				DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
+
+				// file name
+				out.writeInt(file.getName().length());
+				out.write(file.getName().getBytes());
+
+				// file size
+				long size = file.length();
+				out.writeLong(size);
+
+				FileInputStream in = new FileInputStream(file);
+
+				byte[] buffer = new byte[1024];
+				while (size > 0) {
+					int len = in.read(buffer, 0, buffer.length);
+					out.write(buffer, 0, len);
+					size -= len;
+				}
+				in.close();
+			}
+		} catch (Exception e) {
+			// System.out.println("Unable to send file");
+		}
+
 	}
 
 	private void sendRespond(Socket clientSocket, String reply) {

@@ -2,6 +2,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.Socket;
@@ -10,6 +11,7 @@ import java.util.Scanner;
 
 public class TPCclient {
 	boolean loginValid = false;
+	private Object retrun;
 
 	public TPCclient(String server, int tcpPort) throws IOException {
 
@@ -38,14 +40,18 @@ public class TPCclient {
 						receivedData += new String(buffer, 0, len);
 						size -= len;
 					}
-					
-						respondLogin(socket, receivedData);
-						String data = receivedData.trim();
-						String dataArray[] = data.split(" ");
-						String commend = dataArray[0];
+
+					respondLogin(socket, receivedData);
+					String data = receivedData.trim();
+					String dataArray[] = data.split(" ");
+					String commend = dataArray[0];
+					if (commend.equals("downloadReady")) {
+						download(socket);
+					} else {
 						System.out.println(receivedData.substring(commend.length() + 1, receivedData.length()));
-						System.out.println("Please enter the commend:");
-					
+					}
+					System.out.println("Please enter the commend:");
+
 				}
 			} catch (IOException ex) {
 				System.err.println("Connection dropped!");
@@ -73,26 +79,27 @@ public class TPCclient {
 			commend = scanner.nextLine();
 			String data = commend.trim();
 			String dataArray[] = data.split(" ");
-			if(dataArray[0].equals("upload")) {
-				if (dataArray.length < 3)
-					System.out.println("ERROR: Miss argument");
-				else {
+			if (dataArray[0].equals("upload")) {
+				if (dataArray.length < 2) {
+					System.out.println("Invalid input.");
+					System.out.println("Please enter the commend:");
+				} else {
 					sendRequest(socket, dataArray[0]);
-					upload(socket, dataArray[1], dataArray[2]);
+					upload(socket, dataArray[1]);
 				}
-			}else {
-			sendRequest(socket, commend);
+			} else {
+				sendRequest(socket, commend);
 			}
 		}
 	}
-	
-	private void upload(Socket socket, String filename, String dest) {
+
+	private void upload(Socket socket, String filename) {
 		try {
-			Thread.sleep(500);
+			Thread.sleep(100);
 			File file = new File(filename);
 
 			if (!file.exists()) {
-				System.err.println( "File " + filename + " doesn't exist.");
+				System.err.println("File " + filename + " doesn't exist.");
 				return;
 			}
 			if (file.isDirectory()) {
@@ -102,37 +109,63 @@ public class TPCclient {
 
 			DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
-			// name
+			// file name
 			out.writeInt(file.getName().length());
 			out.write(file.getName().getBytes());
-//			dest = /* dest + */file.getName();
-//			out.writeInt(dest.length());
-//			out.write(dest.getBytes());
 
 			// file
 			long size = file.length();
 			out.writeLong(size);
 
 			FileInputStream in = new FileInputStream(file);
-			System.out.print(file.getName() + " (size: " + size + "B) is uploading");
-			
+			System.out.println(file.getName() + " (size: " + size + "B) is uploading");
+
 			byte[] buffer = new byte[1024];
 			while (size > 0) {
 				int len = in.read(buffer, 0, buffer.length);
 				out.write(buffer, 0, len);
 				size -= len;
-				System.out.print(".");
-				Thread.sleep(10);
 			}
-			
-			System.out.println("\n" +filename + " is uploaded sucessfully.");
 			in.close();
+			return;
 
 		} catch (Exception e) {
 			System.out.println("Fail to upload the file");
 		}
 	}
-	
+
+	private void download(Socket socket) {
+		byte[] buffer = new byte[1024];
+
+		try {
+			DataInputStream in = new DataInputStream(socket.getInputStream());
+
+			int nameLen = in.readInt();
+			in.read(buffer, 0, nameLen);
+			String name = new String(buffer, 0, nameLen);
+
+			long size = in.readLong();
+
+			File file = new File(name);
+			FileOutputStream out = new FileOutputStream(file);
+
+			System.out.print("Downloading file " + name);
+			while (size > 0) {
+				int len = in.read(buffer, 0, buffer.length);
+				out.write(buffer, 0, len);
+				size -= len;
+				System.out.print(".");
+			}
+
+			System.out.println("\nFile " + name + " download completed");
+			out.close();
+			return;
+
+		} catch (IOException e) {
+			System.out.println("\nFail to download the file.");
+		}
+	}
+
 	public String login() {
 		System.out.println("Please enter your username:");
 		Scanner scanner = new Scanner(System.in);
@@ -153,7 +186,7 @@ public class TPCclient {
 		if (commend.equals("login")) {
 			if (dataArray[1].equals("Successful")) {
 				loginValid = true;
-			} 
+			}
 		}
 
 	}
