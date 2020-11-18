@@ -106,7 +106,7 @@ public class TPCserver {
 
 		case "download": // 3. Client download file
 			if (argu == "") {
-				sendRespond(clientSocket, command + " Invalid command.");
+				sendRespond(clientSocket, command + " You are missing the path of the file.");
 			} else {
 				download(command, clientSocket, argu);
 			}
@@ -170,7 +170,6 @@ public class TPCserver {
 		}
 
 		reply = "login " + reply;
-		System.out.println(reply);
 		sendRespond(clientSocket, reply);
 	}
 
@@ -415,7 +414,7 @@ public class TPCserver {
 			} else {
 				sendRespond(clientSocket, "downloadReady");
 
-				Thread.sleep(100);
+				Thread.sleep(500);
 
 				DataOutputStream out = new DataOutputStream(clientSocket.getOutputStream());
 

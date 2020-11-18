@@ -50,7 +50,8 @@ public class TPCclient {
 					} else {
 						System.out.println(receivedData.substring(commend.length() + 1, receivedData.length()));
 					}
-					System.out.println("Please enter the commend:");
+					if (loginValid == true)
+						System.out.println("Please enter the commend:");
 
 				}
 			} catch (IOException ex) {
@@ -67,7 +68,7 @@ public class TPCclient {
 			commend = login();
 			sendRequest(socket, commend);
 			try {
-				Thread.sleep(700);
+				Thread.sleep(1000);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -81,7 +82,7 @@ public class TPCclient {
 			String dataArray[] = data.split(" ");
 			if (dataArray[0].equals("upload")) {
 				if (dataArray.length < 2) {
-					System.out.println("Invalid input.");
+					System.out.println("You are missing the path of the file.");
 					System.out.println("Please enter the commend:");
 				} else {
 					sendRequest(socket, dataArray[0]);
@@ -95,7 +96,7 @@ public class TPCclient {
 
 	private void upload(Socket socket, String filename) {
 		try {
-			Thread.sleep(100);
+			Thread.sleep(500);
 			File file = new File(filename);
 
 			if (!file.exists()) {

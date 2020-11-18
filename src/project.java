@@ -64,7 +64,7 @@ public class project {
 
 			// only the computerName is different can be added to the list
 			//!receivedData.equals(computerName) && 
-			if (!checkPacketExitInList(receivedData)) {
+			if (!receivedData.equals(computerName) && !checkPacketExitInList(receivedData)) {
 				synchronized (clientList) {
 					clientList.add(receivedPacket);
 				}
