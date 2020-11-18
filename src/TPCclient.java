@@ -74,54 +74,62 @@ public class TPCclient {
 			String data = commend.trim();
 			String dataArray[] = data.split(" ");
 			if(dataArray[0].equals("upload")) {
-				upload(socket, commend.substring(dataArray[0].length() + 1, commend.length()));
+				if (dataArray.length < 3)
+					System.out.println("ERROR: Miss argument");
+				else {
+					sendRequest(socket, dataArray[0]);
+					upload(socket, dataArray[1], dataArray[2]);
+				}
 			}else {
 			sendRequest(socket, commend);
 			}
 		}
 	}
-	public void upload(Socket socket, String path){
-
-		File file = new File(path);
-		
-		if (!file.exists()) {
-			System.err.println( "File " + path + " doesn't exist.");
-			return;
-		}
-		if (file.isDirectory()) {
-			System.err.println(path + " is a directory which can't be uploaded.");
-			return;
-		}	
-		
+	
+	private void upload(Socket socket, String filename, String dest) {
 		try {
-			FileInputStream in = new FileInputStream(file);
+			Thread.sleep(500);
+			File file = new File(filename);
+
+			if (!file.exists()) {
+				System.err.println( "File " + filename + " doesn't exist.");
+				return;
+			}
+			if (file.isDirectory()) {
+				System.err.println(filename + " is a directory which can't be uploaded.");
+				return;
+			}
+
 			DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-			//String request = "upload ";
-			
+
+			// name
 			out.writeInt(file.getName().length());
 			out.write(file.getName().getBytes());
-			
+//			dest = /* dest + */file.getName();
+//			out.writeInt(dest.length());
+//			out.write(dest.getBytes());
+
+			// file
 			long size = file.length();
 			out.writeLong(size);
-			
+
+			FileInputStream in = new FileInputStream(file);
 			System.out.print(file.getName() + " (size: " + size + "B) is uploading");
 			
 			byte[] buffer = new byte[1024];
-			
-			while(size > 0) {
+			while (size > 0) {
 				int len = in.read(buffer, 0, buffer.length);
 				out.write(buffer, 0, len);
 				size -= len;
 				System.out.print(".");
+				Thread.sleep(10);
 			}
 			
-			System.out.println("\n" + path + " is uploaded sucessfully.");
-//			in.close();
-//			out.close();		
-			
-			
-		} catch (IOException e) {
-			System.err.println( path + " upload is failed.");
+			System.out.println("\n" +filename + " is uploaded sucessfully.");
+			in.close();
+
+		} catch (Exception e) {
+			System.out.println("Fail to upload the file");
 		}
 	}
 	

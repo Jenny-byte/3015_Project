@@ -100,7 +100,7 @@ public class TPCserver {
 			break;
 
 		case "upload": // 3 Client upload file
-			upload(command, clientSocket, argu);
+			upload(command, clientSocket);
 
 			break;
 
@@ -359,10 +359,11 @@ public class TPCserver {
 		sendRespond(clientSocket, reply);
 	}
 
-	private void upload(String command, Socket clientSocket, String path) {
-
-		String reply = command + " ";
+	private void upload(String command, Socket clientSocket) {
 		byte[] buffer = new byte[1024];
+		
+		String reply = command + " ";
+		
 		try {
 			DataInputStream in = new DataInputStream(clientSocket.getInputStream());
 
@@ -387,9 +388,8 @@ public class TPCserver {
 
 			reply += name + " (" + size + ") is successful uploaded.";
 			sendRespond(clientSocket, reply);
-
-//			in.close();
-//			out.close();
+			
+			out.close();
 		} catch (IOException e) {
 			reply += "Unable to download file.";
 			sendRespond(clientSocket, reply);

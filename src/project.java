@@ -45,6 +45,8 @@ public class project {
 
 	public void udpServer(int port) throws IOException {
 
+		// can't delete the client!!
+
 		InetAddress myIp = InetAddress.getLocalHost();
 		String computerName = myIp.getHostName();
 		System.out.println("My computer name: " + computerName);
