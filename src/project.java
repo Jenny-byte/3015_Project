@@ -13,7 +13,7 @@ public class project {
 	// boolean isRunning = true;
 
 	public project() throws IOException {
-
+		
 		Thread t1 = new Thread(() -> {
 			try {
 				udpServer(9998);
@@ -64,7 +64,7 @@ public class project {
 
 			// only the computerName is different can be added to the list
 			//!receivedData.equals(computerName) && 
-			if (!receivedData.equals(computerName) && !checkPacketExitInList(receivedData)) {
+			if (!receivedData.equals(computerName) && !checkPacketExistInList(srcAddr)) {
 				synchronized (clientList) {
 					clientList.add(receivedPacket);
 				}
@@ -84,10 +84,10 @@ public class project {
 		}
 	}
 
-	public boolean checkPacketExitInList(String receivedData) {
+	public boolean checkPacketExistInList(String srcAddr) { //check packet exist in list by ip address
 		for (DatagramPacket client : clientList) {
-			String ListcomputerName = new String(client.getData(), 0, client.getLength());
-			if (ListcomputerName.equals(receivedData)) {
+			String ListIpAddress = client.getAddress().toString();
+			if (ListIpAddress.equals(srcAddr)) {
 				return true;
 			}
 
