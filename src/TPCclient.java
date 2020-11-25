@@ -1,3 +1,11 @@
+import java.awt.BorderLayout;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -6,20 +14,130 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.concurrent.CopyOnWriteArrayList;
 
-public class TPCclient {
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+
+public class TPCclient extends JFrame {
 	boolean loginValid = false;
-	private Object retrun;
 
-	public TPCclient(String server, int tcpPort) throws IOException {
+	public TPCclient(int tcpPort, CopyOnWriteArrayList<DatagramPacket> clientList) throws IOException {
 
-		try {
-			tpcClient(server, tcpPort);
-		} catch (IOException e) {
-			System.err.printf("Unable to connect server %s:%d\n", server, tcpPort);
-			System.exit(-1);
+		tpcClient(tcpPort, clientList);
+
+	}
+
+	private void tpcClient(int tcpPort, CopyOnWriteArrayList<DatagramPacket> clientList) {
+
+		boolean welcome = true;
+		while (welcome) {
+
+			System.out.println("----------------------------------------");
+			System.out.println("Please input the option number:");
+			System.out.println("1. List out all the avaliable servers.\n" + "2. Find a server to connect and login.\n"
+					+ "3. Exit\n");
+			Scanner scanner2 = new Scanner(System.in);
+			int option = scanner2.nextInt();
+
+			if (option == 1) {
+				synchronized (clientList) {
+					System.out.printf("Total %d server(s) in the list:\n", clientList.size());
+					printList(clientList);
+				}
+
+			} else if (option == 2) {
+				if (clientList.isEmpty()) {
+					System.out.println("No server can be chosen.");
+				} else {
+					chooseServerConnect(tcpPort, clientList);
+					welcome = false;
+				}
+			} else if (option == 3) {
+				System.out.println("bye!");
+				System.exit(0);
+
+			} else {
+				System.out.println("Invalid input!");
+			}
+		}
+	}
+
+	public void printList(CopyOnWriteArrayList<DatagramPacket> cList) {
+		int i = 1;
+		for (DatagramPacket client : cList) {
+			String computerName = new String(client.getData(), 0, client.getLength());
+			System.out.println(i + ". " + computerName + " (" + client.getAddress().toString() + ")");
+			i++;
+		}
+	}
+
+	public void chooseServerConnect(int tcpPort, CopyOnWriteArrayList<DatagramPacket> clientList) {
+
+		if (!clientList.isEmpty()) {
+
+			Container container = this.getContentPane();
+
+			String[] data = new String[clientList.size()];
+			int i = 0;
+			for (DatagramPacket client : clientList) {
+				String computerName = new String(client.getData(), 0, client.getLength());
+				data[i] = (i + 1) + ". " + computerName + " (" + client.getAddress().toString() + ")";
+				i++;
+			}
+
+			JList<String> listServer = new JList<String>(data);
+			JScrollPane sp = new JScrollPane(listServer);
+			container.add(sp, BorderLayout.CENTER);
+			listServer.addMouseListener(new MouseAdapter() {
+				public void mouseClicked(MouseEvent e) {
+					if (e.getClickCount() == 2) {
+						SwingUtilities.invokeLater(() -> {
+							try {
+								DatagramPacket chosenPacket = clientList.get(listServer.getSelectedIndex());
+								String computerName = new String(chosenPacket.getData(), 0, chosenPacket.getLength());
+								String ipAddress = chosenPacket.getAddress().toString();
+								ipAddress = ipAddress.substring(1, ipAddress.length());
+								System.out.println("Chosen server: " + computerName + " with IP address " + ipAddress);
+								String s = null;
+								int p = 0;
+								try {
+									s = ipAddress;
+									p = tcpPort;
+								} catch (IndexOutOfBoundsException | NumberFormatException e1) {
+									System.err.println("Usage: java chosenServerConnect ipaddress portNum");
+									System.exit(-1);
+								}
+
+								try {
+
+									tpcClient(s, p);
+								} catch (IOException e2) {
+									// TODO Auto-generated catch block
+									e2.printStackTrace();
+								}
+								
+							} catch (Exception ex) {
+
+							}
+						});
+					}
+				}
+			});
+			this.setSize(new Dimension(320, 240));
+			this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			this.setVisible(true);
 		}
 
 	}
@@ -84,9 +202,22 @@ public class TPCclient {
 				if (dataArray.length < 2) {
 					System.out.println("You are missing the path of the file.");
 					System.out.println("Please enter the commend:");
-				} else {
-					sendRequest(socket, dataArray[0]);
-					upload(socket, dataArray[1]);
+				} else if(dataArray.length > 2){
+					System.out.println("Cannot upload more than one file.");
+					System.out.println("Please enter the commend:");
+				}else {
+					String filename = dataArray[1];
+					File file = new File(dataArray[1]);
+					if (!file.exists()) {
+						System.out.println("File " + filename + " doesn't exist.");
+						System.out.println("Please enter the commend:");
+					} else if (file.isDirectory()) {
+						System.out.println(filename + " is a directory which can't be uploaded.");
+						System.out.println("Please enter the commend:");
+					} else {
+						sendRequest(socket, dataArray[0]);
+						upload(socket, filename, file);
+					}
 				}
 			} else {
 				sendRequest(socket, commend);
@@ -94,19 +225,9 @@ public class TPCclient {
 		}
 	}
 
-	private void upload(Socket socket, String filename) {
+	private void upload(Socket socket, String filename, File file) {
 		try {
 			Thread.sleep(500);
-			File file = new File(filename);
-
-			if (!file.exists()) {
-				System.err.println("File " + filename + " doesn't exist.");
-				return;
-			}
-			if (file.isDirectory()) {
-				System.err.println(filename + " is a directory which can't be uploaded.");
-				return;
-			}
 
 			DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
